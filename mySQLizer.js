@@ -5,9 +5,10 @@ import Builder from './builder/Builder.js'
 import {
   _cloneMethodSymbol as _clone,
   _throwErrorMethodSymbol as _throwError,
+  _setTable,
 } from './helper/Helper.js'
 
-const queryDebugger = debug('mySQLizer:query')
+const queryDebugger = debug('mysqlizer:query')
 
 class mySQLizer extends Builder {
   #options
@@ -65,31 +66,22 @@ class mySQLizer extends Builder {
       isOperator,
       executeMethod,
     )
-    instance.setTable(this.#table)
     instance.#execute = this.#execute
     return instance
   }
 
   /**
+   *
    * @param {string} table
-   * @return {void}
+   * @returns {this}
    */
-  setTable(table) {
-    this.#table = table
-  }
-
-  fromTable(table) {
-    if (this.state.query.length > 0)
-      this[_throwError](
-        '[fromTable] method is an alternative to [setTable] method and also it should be first on the chain e.g postsModel.fromTable()',
-      )
-
-    this.setTable(table)
-    return this[_clone]({ query: [], values: [] })
+  table(table) {
+    const { query, values } = this.state
+    return this[_clone]({ query: [...query, `${table}`], values: [...values] })
   }
 
   /*** @return {string}*/
-  get table() {
+  get _table() {
     return this.#table
   }
 

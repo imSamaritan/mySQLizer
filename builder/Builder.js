@@ -139,10 +139,11 @@ class Builder {
 
   /** @param {string[]} columns @return {this} */
   select(...columns) {
+    const { query } = this.state
     const state = { query: [], values: [] }
 
     if (arguments.length === 0) {
-      state.query.push(`SELECT`)
+      state.query = ['SELECT', ...query]
     } else {
       if (columns.length < 1) this[_throwError]('Column or columns, required!')
 
@@ -155,7 +156,7 @@ class Builder {
           "List of columns can't include [empty, null or undefined] column(s) name(s)!",
         )
 
-      state.query.push(`SELECT ${columns.join(', ')} FROM ${this.table}`)
+      state.query = [`SELECT ${columns.join(', ')}`, ...query]
     }
 
     return this[_clone](state, false)
@@ -180,10 +181,7 @@ class Builder {
         "Column or a list of columns can't include [empty, null or undefined] column(s) name(s)!",
       )
 
-    state.query = [
-      ...query,
-      `DISTINCT ${columns.join(', ')} FROM ${this.table}`,
-    ]
+    state.query = [...query, `DISTINCT ${columns.join(', ')}`]
     return this[_clone](state)
   }
 
@@ -192,6 +190,37 @@ class Builder {
     if (arguments.length > 0)
       this[_throwError]('selectAll method takes none or 0 arguments!')
     return this.select('*')
+  }
+
+  /**
+   *
+   * @param {string} table
+   * @returns {this}
+   */
+  from(table) {
+    const { query, values } = this.state
+    return this[_clone]({
+      query: [...query, `FROM ${table}`],
+      values: [...values],
+    })
+  }
+
+  /**
+   *
+   * @param {string} table
+   * @returns {this}
+   */
+  fromTable(table) {
+    const { query, values } = this.state
+    if (query.length > 0)
+      this[_throwError](
+        '[fromTable] method is an alternative to [setTable] method and also it should be first on the chain e.g postsModel.fromTable()',
+      )
+
+    return this[_clone]({
+      query: [...query, `FROM ${table}`],
+      values: [...values],
+    })
   }
 
   /**
@@ -218,7 +247,6 @@ class Builder {
       )
 
     const keys = Object.keys(details)
-    const valuesPlaceholders = keys.map((key) => `?`)
 
     if (keys.length < 1)
       this[_throwError](
@@ -227,33 +255,59 @@ class Builder {
 
     for (const key of keys) values.push(details[key])
 
-    return this[_clone]({
-      query: [
-        `INSERT INTO ${this.table}(${keys.join(', ')}) VALUES(${valuesPlaceholders.join(', ')})`,
-      ],
-      values: [...values],
-    })
+    return this[_clone]({ query: [`INSERT`], values: [...values], keys })
   }
 
+  /**
+   * @param {string} table
+   * @returns {this}
+   */
+  into(table) {
+    const { query, values, keys } = this.state
+    const state = { query: [], values: [...values] }
+    const queryLastPart = query[query.length - 1]
+    const valuesPlaceholders = keys.map(() => `?`)
+
+    if (queryLastPart.startsWith('INSERT')) {
+      state.query = [
+        ...query,
+        `INTO ${table}(${keys.join(', ')}) VALUES(${valuesPlaceholders.join(', ')})`,
+      ]
+    } else {
+      this[_throwError](
+        '[into] method should always chained after [insert] method!',
+      )
+    }
+
+    return this[_clone](state)
+  }
+
+  /**
+   * @returns {this}
+   */
+  update() {
+    const { query } = this.state
+
+    if (query.length > 0) {
+      this[_throwError]('[update] must comes first on the query chain!')
+    }
+
+    return this[_clone]({ query: ['UPDATE'], values: [] })
+  }
   /**
    * @param {object} details
    * @returns {this}
    */
-  update(details) {
+  set(details) {
     const { query } = this.state
     const values = []
 
     if (details === undefined || details === null)
-      this[_throwError]('Update method argument can not be null or undefined!')
+      this[_throwError]('[set] method argument can not be null or undefined!')
 
     if (Array.isArray(details) || typeof details != 'object')
       this[_throwError](
-        'Update method must take in a none empty object type e.g {column: value, ...}!',
-      )
-
-    if (query.length > 0)
-      this[_throwError](
-        'Update method can not be chained after another query builder method!',
+        '[set] method must take in a none empty object type e.g {column: value, ...}!',
       )
 
     const keys = Object.keys(details)
@@ -261,13 +315,13 @@ class Builder {
 
     if (keys.length < 1)
       this[_throwError](
-        'Update method requires none empty object as its argument!',
+        '[set] method requires none empty object as its argument!',
       )
 
     for (const key of keys) values.push(details[key])
 
     return this[_clone]({
-      query: [`UPDATE ${this.table} SET ${columns.join(', ')}`],
+      query: [...query, `SET ${columns.join(', ')}`],
       values: [...values],
     })
   }
@@ -278,24 +332,10 @@ class Builder {
 
   delete() {
     const { query, values } = this.state
-    const state = { query: [], values: [] }
+    const state = { query: [], values: [...values] }
 
-    if (query.length < 1) {
-      state.query = [`DELETE FROM ${this.table}`]
-    }
-
-    if (query.length > 0) {
-      const queryStartsWithWhere = query[0].startsWith('WHERE')
-
-      if (queryStartsWithWhere) {
-        state.query = [`DELETE FROM ${this.table}`, ...query]
-        state.values = [...values]
-      } else {
-        this[_throwError](
-          '[delete] method can not be positioned at this level from the method chain!',
-        )
-      }
-    }
+    if (query.length < 1) state.query = [`DELETE`]
+    if (query.length > 0) state.query = [`DELETE`, ...query]
 
     return this[_clone](state)
   }
@@ -304,18 +344,13 @@ class Builder {
    * @returns {this}
    */
   countRecords() {
-    const { query } = this.state
-    const state = { query: [], values: [] }
+    const { query, values } = this.state
+    const state = { query: [], values: [...values] }
 
     if (arguments.length > 0)
       this[_throwError]('[countRecords] method takes 0 arguments!')
 
-    if (query.length > 0)
-      this[_throwError](
-        '[countRecords] method should be chained first or at top level to the chain',
-      )
-
-    state.query.push(`SELECT COUNT(*) AS recordsCount FROM ${this.table}`)
+    state.query = [`SELECT COUNT(*) AS recordsCount`, ...query]
     return this[_clone](state)
   }
 
@@ -369,7 +404,6 @@ class Builder {
     const orderByState = []
 
     for (const sortElement of sort) {
-
       if (typeof sortElement === 'string') {
         orderByState.push(`${sortElement} ASC`)
       }
@@ -382,7 +416,6 @@ class Builder {
           orderByState.push(`${column} ${direction.toUpperCase()}`)
         }
       }
-      
     }
 
     const state = {

@@ -1,5 +1,6 @@
 export const _cloneMethodSymbol = Symbol()
 export const _throwErrorMethodSymbol = Symbol()
+export const _setTable = Symbol()
 
 export default class Helper {
   static castValue(value, type) {

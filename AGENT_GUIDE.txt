@@ -1,0 +1,22 @@
+* IMPORTANT TAKE
+- This file serves as a guide to an AI Agent on what to do and what not to do. 
+- On every take an agent take or do, first the agent or always check this file guide instructions before peforming a task.
+- The agent is require to ask permission, if there's a need to do something that is not mentioned on this file or for breaking the instructions given from this file.
+
+
+* INSTRUCTIONS
+
+1. Always check this file before perfoming any given task.
+2. Do not adding any new files on this project.
+3. Always modify neccessary files if required without adding a new file.
+4. Double check your solutions and verify them.
+5. Be specific on the reasons of doing something.
+6. Always ask permission, if you go out of my instructions.
+7. Always mark task as complete inside the AGENT_TASKS.txt, if a task is done
+8. Do task according to numbering of steps in an ascending order
+
+* INTERACTION WITH AN AGENT OR PROMPT
+- For doing a task, i will prompt you as follow => do:[number]
+- For refreshing your guide => do:refresh
+- For asking only => do:ask my prompt
+  - You are required to answer only, do not do anything else even if you see the need.

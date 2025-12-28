@@ -25,12 +25,7 @@ app.use(express.json())
 //Get all posts
 app.get('/', async (req, res) => {
   try {
-    const results = await db
-      .fromTable(`posts`)
-      .selectAll()
-      .orderBy({ post_id: 'ASC' }, `post_created_at`)
-
-    console.log(db.state)
+    const results = await db.selectAll().from(`posts`)
     return res.json(results)
   } catch (error) {
     return res.status(400).json({ warning: error.message })
@@ -43,8 +38,8 @@ app.get('/posts/:id', async (req, res) => {
 
   try {
     const results = await db
-      .fromTable(`posts`)
       .selectAll()
+      .from(`posts`)
       .where(`post_id`, `=`, { value: id, type: `number` })
 
     return res.json(results)
@@ -58,8 +53,8 @@ app.post('/posts', async (req, res) => {
   const { post_author, post_title, post_body, post_likes } = req.body
   try {
     const results = await db
-      .fromTable(`posts`)
       .insert({ post_author, post_title, post_body, post_likes })
+      .into(`posts`)
 
     return res
       .status(201)
@@ -76,8 +71,9 @@ app.put('/posts/:id', async (req, res) => {
 
   try {
     const results = await db
-      .fromTable(`posts`)
-      .update(data)
+      .update()
+      .table(`posts`)
+      .set(data)
       .where(`post_id`, `=`, { value: id, type: `number` })
 
     if (results.affectedRows > 0) return res.redirect('/posts/' + id)
@@ -92,10 +88,9 @@ app.delete('/posts/:id', async (req, res) => {
   const id = req.params.id
   try {
     const results = await db
-      .fromTable(`posts`)
-      .where(`post_id`, `=`, { value: id, type: `number` })
       .delete()
-      .done()
+      .from(`posts`)
+      .where(`post_id`, `=`, { value: id, type: 'number' })
 
     if (results.affectedRows > 0)
       return res.json({ post_id: id, post_status: 'removed' })

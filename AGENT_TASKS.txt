@@ -1,0 +1,23 @@
+*IMPORTANT TAKE
+- For doing a task, always look at this file first.
+- Your will be prompt as following "Do [number]" to do a task
+- Always remember to follow the AGENT_GUIDE.txt file instructions.
+- Perform a task that is required, not anything else.
+- Verify your solutions by double checking
+- Ask permission if required before continueing
+
+*TASKS
+1. List all methods from the Builder's module [COMPLETE]
+2. Scan the project and find where i've used .setTable() and remove that. [COMPLETE]
+3. [COMPLETE]
+  3.1 Remove all uncessary file like testing and example files. [COMPLETE]
+  3.2 Scan the entire project carefully. [COMPLETE]
+  3.3 Understand the API. [COMPLETE]
+  3.4 Once you understand the implementation detail and public API [COMPLETE]
+  3.5 Rewrite the documentation files especially the README file, do not adding any news files to the project [COMPLETE]
+  3.6 keep not of the following changes [COMPLETE]
+    3.6.1 fromTable method is used with select, delete method [COMPLETE]
+    3.6.2 from method is available for working with select, update, delete [COMPLETE]
+    3.6.3 update is required to chained top level, followed by table method then set method which takes an object of data key/value where key is column and value is field value and update method takes zero arguments [COMPLETE]
+    3.6.4 Remove all unneccessary .md files, leave the ones that matters especially the README file [COMPLETE]
+    3.6.5 Make sure the logo stays the same as it linked inside the README file [COMPLETE]
