@@ -1,17 +1,17 @@
-# miniORM Quick Reference Guide
+# mySQLizer Quick Reference Guide
 
-Quick reference for the most common operations with miniORM.
+Quick reference for the most common operations with mySQLizer.
 
-**Updated:** Includes new `distinct()`, `in()`, and `notIn()` methods!
+**Updated:** Includes `distinct()`, `in()`, and `notIn()` methods!
 
 ---
 
 ## 🚀 Setup
 
 ```javascript
-import miniORM from './miniORM.js'
+import mySQLizer from 'mysqlizer'
 
-const model = new miniORM()
+const model = new mySQLizer()
 ```
 
 ---
@@ -161,13 +161,13 @@ await model.fromTable('users').countRecords()
 
 ```javascript
 const result = await model
-  .fromTable('users')
   .insert({
     name: 'John Doe',
     email: 'john@example.com',
     status: 'active',
     created_at: new Date()
   })
+  .into('users')
 
 console.log(result.insertId)
 ```
@@ -179,8 +179,9 @@ console.log(result.insertId)
 ### Update with WHERE
 ```javascript
 await model
-  .fromTable('users')
-  .update({
+  .update()
+  .table('users')
+  .set({
     status: 'inactive',
     updated_at: new Date()
   })
@@ -190,8 +191,9 @@ await model
 ### Bulk Update
 ```javascript
 await model
-  .fromTable('users')
-  .update({ status: 'verified' })
+  .update()
+  .table('users')
+  .set({ status: 'verified' })
   .where('email_verified', '=', true)
   .andWhere('status', '=', 'pending')
 ```
@@ -199,8 +201,9 @@ await model
 ### Update Excluding Certain Values ✨ NEW
 ```javascript
 await model
-  .fromTable('users')
-  .update({ last_updated: new Date() })
+  .update()
+  .table('users')
+  .set({ last_updated: new Date() })
   .whereField('status')
   .notIn(['banned', 'deleted'])
 ```
@@ -327,12 +330,12 @@ app.get('/users', async (req, res) => {
 app.post('/users', async (req, res) => {
   try {
     const result = await model
-      .fromTable('users')
       .insert({
         name: req.body.name,
         email: req.body.email,
         created_at: new Date()
       })
+      .into('users')
     
     res.status(201).json({ id: result.insertId })
   } catch (error) {
@@ -346,8 +349,9 @@ app.post('/users', async (req, res) => {
 app.put('/users/:id', async (req, res) => {
   try {
     const result = await model
-      .fromTable('users')
-      .update({
+      .update()
+      .table('users')
+      .set({
         name: req.body.name,
         updated_at: new Date()
       })
@@ -368,7 +372,7 @@ app.delete('/users/:id', async (req, res) => {
       .fromTable('users')
       .delete()
       .where('id', '=', { value: req.params.id, type: 'number' })
-      .andWhere((builder) => {
+      .andGroup((builder) => {
         return builder
           .whereField('role')
           .notIn(['admin', 'superadmin'])
@@ -396,7 +400,6 @@ const query = model
 // Inspect before executing
 console.log(query.state.query)  // Query parts array
 console.log(query.state.values) // Values array
-console.log(query.table)        // Table name
 
 // Execute
 const results = await query.done()
@@ -408,13 +411,13 @@ const results = await query.done()
 
 ```bash
 # Debug all
-DEBUG=miniORM:* node app.js
+DEBUG=mySQLizer:*,mysqlizer:* node app.js
 
 # Debug queries only
-DEBUG=miniORM:query node app.js
+DEBUG=mysqlizer:query node app.js
 
 # Debug database only
-DEBUG=miniORM:db node app.js
+DEBUG=mySQLizer:db node app.js
 ```
 
 ---
@@ -436,8 +439,8 @@ CONNECTION_LIMIT=10
 
 ### Multiple Tables
 ```javascript
-const usersModel = new miniORM()
-const postsModel = new miniORM()
+const usersModel = new mySQLizer()
+const postsModel = new mySQLizer()
 
 const users = await usersModel.fromTable('users').selectAll()
 const posts = await postsModel.fromTable('posts').selectAll()
@@ -445,7 +448,7 @@ const posts = await postsModel.fromTable('posts').selectAll()
 
 ### Reusable Base Query
 ```javascript
-const activeUsersBase = model.fromTable('users').where('status', '=', 'active')
+const activeUsersBase = model.fromTable('users').selectAll().where('status', '=', 'active')
 
 // Different queries from same base
 const admins = await activeUsersBase.andWhere('role', '=', 'admin')
@@ -477,7 +480,7 @@ async function getUsers(filters) {
   }
   
   if (filters.roles && filters.roles.length > 0) {
-    query = query.andWhere((builder) => {
+    query = query.andGroup((builder) => {
       return builder.whereField('role').in(filters.roles)
     })
   }
@@ -720,19 +723,17 @@ model.fromTable('users')
 
 ## 📊 Complete Method List (Updated)
 
-**Total: 32 methods** (4 new additions!)
-
-- Core: `new miniORM()`, `fromTable()`, `setTable()`, `done()`, `then()`
-- Query: `select()` ✨, `distinct()` ✨, `selectAll()`, `countRecords()`, `insert()`, `update()`, `delete()`
+- Core: `new mySQLizer()`, `from()`, `fromTable()`, `table()`, `into()`, `done()`, `then()`, `catch()`, `finally()`
+- Query: `select()` ✨, `distinct()` ✨, `selectAll()`, `countRecords()`, `insert()`, `update()`, `set()`, `delete()`
 - WHERE: `where()`, `andWhere()`, `orWhere()`, `whereIn()`, `whereNotIn()`, `whereField()`
 - Field Ops: `isNull()`, `isNotNull()`, `isBetween()`, `isNotBetween()`, `in()` ✨, `notIn()` ✨
 - Logical: `and()`, `or()`, `andGroup()`, `orGroup()`
-- Pagination: `limit()`, `offset()`
-- Properties: `state`, `table`, `operatorSignal`
+- Sorting & Pagination: `orderBy()`, `limit()`, `offset()`
+- Properties: `state`, `operatorSignal`
 
 ---
 
-**Need more help? Check CURRENT_API_SUMMARY.md for complete documentation.**
+**Need more help? Check [README.md](README.md) for complete documentation.**
 
 ---
 

@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get started with miniORM in minutes!
+Get started with mySQLizer in minutes!
 
 ## Installation
 
@@ -27,14 +27,14 @@ const model = new mySQLizer({
 })
 ```
 
-### 2. Set your table
+### 2. Specify your table
 
 ```javascript
-// Option 1: Set table once
-model.setTable('users')
+// Option 1: Use select() followed by from()
+const users = await model.selectAll().from('users')
 
-// Option 2: Use fromTable() in the chain
-const users = await model.fromTable('users').selectAll()
+// Option 2: Use fromTable() at the start of the chain
+const usersFromTable = await model.fromTable('users').selectAll()
 ```
 
 ## Common Operations
@@ -49,7 +49,7 @@ const allUsers = await model.fromTable('users').selectAll()
 const names = await model.fromTable('users').select('name', 'email')
 
 // Get distinct values
-const uniqueCities = await model.fromTable('users').distinct('city')
+const uniqueCities = await model.fromTable('users').select().distinct('city')
 
 // With WHERE clause
 const user = await model
@@ -70,12 +70,12 @@ const results = await model
 ```javascript
 // Insert a single record
 const result = await model
-  .fromTable('users')
   .insert({
     name: 'John Doe',
     email: 'john@example.com',
     age: 30
   })
+  .into('users')
 
 console.log('Inserted ID:', result.insertId)
 ```
@@ -85,8 +85,9 @@ console.log('Inserted ID:', result.insertId)
 ```javascript
 // Update records
 const result = await model
-  .fromTable('users')
-  .update({ name: 'Jane Doe', age: 31 })
+  .update()
+  .table('users')
+  .set({ name: 'Jane Doe', age: 31 })
   .where('id', '=', { value: 1, type: 'number' })
 
 console.log('Affected rows:', result.affectedRows)
@@ -97,9 +98,9 @@ console.log('Affected rows:', result.affectedRows)
 ```javascript
 // Delete records
 const result = await model
-  .fromTable('users')
-  .where('id', '=', { value: 1, type: 'number' })
   .delete()
+  .from('users')
+  .where('id', '=', { value: 1, type: 'number' })
 
 console.log('Deleted rows:', result.affectedRows)
 ```
@@ -125,13 +126,15 @@ const users = await model
 const users = await model
   .fromTable('users')
   .selectAll()
-  .where('age', 'BETWEEN', { value: [18, 65], type: 'number' })
+  .whereField('age')
+  .isBetween(18, 65)
 
 // NULL checks
 const users = await model
   .fromTable('users')
   .selectAll()
-  .where('deleted_at', 'IS NULL')
+  .whereField('deleted_at')
+  .isNull()
 ```
 
 ### Grouping Conditions
@@ -156,14 +159,13 @@ const results = await model
 const users = await model
   .fromTable('users')
   .selectAll()
-  .orderBy('created_at', 'DESC')
+  .orderBy({ created_at: 'DESC' })
 
 // Order by multiple columns
 const users = await model
   .fromTable('users')
   .selectAll()
-  .orderBy('last_name', 'ASC')
-  .orderBy('first_name', 'ASC')
+  .orderBy('last_name', 'first_name')
 ```
 
 ### Limiting Results
@@ -173,7 +175,7 @@ const users = await model
 const topUsers = await model
   .fromTable('users')
   .selectAll()
-  .orderBy('score', 'DESC')
+  .orderBy({ score: 'DESC' })
   .limit(10)
 
 // With offset (pagination)
@@ -218,8 +220,8 @@ async function getUserPosts(userId) {
       .fromTable('posts')
       .selectAll()
       .where('user_id', '=', { value: userId, type: 'number' })
-      .where('status', '=', { value: 'published', type: 'string' })
-      .orderBy('created_at', 'DESC')
+      .andWhere('status', '=', { value: 'published', type: 'string' })
+      .orderBy({ created_at: 'DESC' })
       .limit(10)
 
     return {
@@ -286,8 +288,8 @@ app.get('/users/:id', async (req, res) => {
 app.post('/users', async (req, res) => {
   try {
     const result = await model
-      .fromTable('users')
       .insert(req.body)
+      .into('users')
 
     res.status(201).json({ 
       id: result.insertId,
@@ -302,8 +304,9 @@ app.post('/users', async (req, res) => {
 app.put('/users/:id', async (req, res) => {
   try {
     const result = await model
-      .fromTable('users')
-      .update(req.body)
+      .update()
+      .table('users')
+      .set(req.body)
       .where('id', '=', { value: req.params.id, type: 'number' })
 
     if (result.affectedRows === 0) {
@@ -320,9 +323,9 @@ app.put('/users/:id', async (req, res) => {
 app.delete('/users/:id', async (req, res) => {
   try {
     const result = await model
-      .fromTable('users')
-      .where('id', '=', { value: req.params.id, type: 'number' })
       .delete()
+      .from('users')
+      .where('id', '=', { value: req.params.id, type: 'number' })
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'User not found' })
@@ -382,9 +385,9 @@ $env:DEBUG="mySQLizer:*"; node your-app.js
 
 2. **Chain Methods**: mySQLizer uses an immutable builder pattern
    ```javascript
-   const query = model.fromTable('users')
+   const query = model.fromTable('users').selectAll()
    const withWhere = query.where('age', '>', { value: 18, type: 'number' })
-   const withOrder = withWhere.orderBy('name', 'ASC')
+   const withOrder = withWhere.orderBy({ name: 'ASC' })
    ```
 
 3. **Promise Interface**: You can await directly or call `.done()`
@@ -402,14 +405,13 @@ $env:DEBUG="mySQLizer:*"; node your-app.js
 ## Next Steps
 
 - Check the full [README.md](README.md) for complete API documentation
-- See [examples/](examples/) for more code samples
-- Report issues on [GitHub](https://github.com/yourusername/miniorm/issues)
+- Report issues on [GitHub](https://github.com/imSamaritan/mySQLizer/issues)
 
 ## Need Help?
 
 - 📖 [Full Documentation](README.md)
-- 🐛 [Report Issues](https://github.com/yourusername/mysqlizer/issues)
-- 💬 [Discussions](https://github.com/yourusername/mysqlizer/discussions)
+- 🐛 [Report Issues](https://github.com/imSamaritan/mySQLizer/issues)
+- 💬 [Discussions](https://github.com/imSamaritan/mySQLizer/discussions)
 
 ---
 
