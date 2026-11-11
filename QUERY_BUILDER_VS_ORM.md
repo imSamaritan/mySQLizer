@@ -41,15 +41,18 @@ const users = await db
   .limit(10)
 
 // Insert with simple object
-await db.fromTable('users').insert({
-  name: 'John Doe',
-  email: 'john@example.com'
-})
+await db
+  .insert({
+    name: 'John Doe',
+    email: 'john@example.com'
+  })
+  .into('users')
 
 // Update with WHERE conditions
 await db
-  .fromTable('users')
-  .update({ status: 'inactive' })
+  .update()
+  .table('users')
+  .set({ status: 'inactive' })
   .where('last_login', '<', '2024-01-01')
 
 // Complex conditions with grouping
@@ -221,11 +224,13 @@ SELECT id, name, email FROM users WHERE status = 'active' LIMIT 10;
 
 **mySQLizer:**
 ```javascript
-const result = await db.fromTable('users').insert({
-  name: 'John Doe',
-  email: 'john@example.com',
-  status: 'active'
-})
+const result = await db
+  .insert({
+    name: 'John Doe',
+    email: 'john@example.com',
+    status: 'active'
+  })
+  .into('users')
 ```
 
 **TypeORM:**

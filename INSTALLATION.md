@@ -175,17 +175,18 @@ const users = await db
 
 // INSERT
 const result = await db
-  .fromTable('users')
   .insert({
     name: 'John Doe',
     email: 'john@example.com',
     status: 'active'
   })
+  .into('users')
 
 // UPDATE
 await db
-  .fromTable('users')
-  .update({ status: 'inactive' })
+  .update()
+  .table('users')
+  .set({ status: 'inactive' })
   .where('id', '=', { value: 1, type: 'number' })
 
 // DELETE
@@ -249,10 +250,10 @@ app.listen(3000, () => {
 ## 📦 Package Information
 
 - **Package Name:** `mysqlizer`
-- **Current Version:** 1.0.0
+- **Current Version:** 1.1.0
 - **NPM:** https://www.npmjs.com/package/mysqlizer
 - **License:** MIT
-- **Repository:** https://github.com/yourusername/mysqlizer
+- **Repository:** https://github.com/imSamaritan/mySQLizer
 
 ---
 
@@ -269,8 +270,8 @@ app.listen(3000, () => {
 ## 💡 Need Help?
 
 - 📖 [Full Documentation](README.md)
-- 🐛 [Report Issues](https://github.com/yourusername/mysqlizer/issues)
-- 💬 [Discussions](https://github.com/yourusername/mysqlizer/discussions)
+- 🐛 [Report Issues](https://github.com/imSamaritan/mySQLizer/issues)
+- 💬 [Discussions](https://github.com/imSamaritan/mySQLizer/discussions)
 - 📚 [API Reference](README.md#api-reference)
 
 ---
