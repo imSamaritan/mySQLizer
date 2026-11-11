@@ -49,10 +49,18 @@ class Builder {
     const { query, values } = this.state
 
     const builder = this[_clone](
-      { query: [...query, logicOperaor], values: [...values] },
+      { query: [...query, logicOperaor, '('], values: [...values] },
       true,
     )
-    return callback(builder)
+    const grouped = callback(builder)
+
+    return this[_clone](
+      {
+        query: [...grouped.state.query, ')'],
+        values: [...grouped.state.values],
+      },
+      true,
+    )
   }
 
   /**@param {string} column
@@ -370,7 +378,7 @@ class Builder {
     state.query = [...query, `LIMIT ?`]
     state.values = [...values, limitTo]
 
-    return this[_clone](this.state)
+    return this[_clone](state)
   }
 
   /**@param {number} offsetFrom
