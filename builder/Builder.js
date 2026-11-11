@@ -147,8 +147,8 @@ class Builder {
 
   /** @param {string[]} columns @return {this} */
   select(...columns) {
-    const { query } = this.state
-    const state = { query: [], values: [] }
+    const { query, values } = this.state
+    const state = { query: [], values: [...values] }
 
     if (arguments.length === 0) {
       state.query = ['SELECT', ...query]
@@ -175,8 +175,8 @@ class Builder {
    * @returns {this}
    */
   distinct(...columns) {
-    const { query } = this.state
-    const state = { query: [], values: [] }
+    const { query, values } = this.state
+    const state = { query: [], values: [...values] }
 
     if (columns.length < 1) this[_throwError]('Column or columns, required!')
 
@@ -189,7 +189,11 @@ class Builder {
         "Column or a list of columns can't include [empty, null or undefined] column(s) name(s)!",
       )
 
-    state.query = [...query, `DISTINCT ${columns.join(', ')}`]
+    if (query[0] === 'SELECT') {
+      state.query = ['SELECT', `DISTINCT ${columns.join(', ')}`, ...query.slice(1)]
+    } else {
+      state.query = [...query, `DISTINCT ${columns.join(', ')}`]
+    }
     return this[_clone](state)
   }
 
@@ -507,7 +511,7 @@ class Builder {
       const valueIsAnObject = value['value'] instanceof Object
       const valueIsAnArray = Array.isArray(value['value'])
       const valueIsInvalidOrEmptyString =
-        !value['value'] || value['value'] === ''
+        value['value'] === '' || Number.isNaN(value['value'])
 
       const valueKeyIsNotPresent = !valueKeys.includes('value')
       const typeKeyIsNotPresent = !valueKeys.includes('type')
